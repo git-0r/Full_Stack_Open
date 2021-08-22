@@ -59,17 +59,9 @@ const App = () => {
     positive: positive,
   }
 
-  const goodClickHandler = newValue => {
-    setGood(newValue)
-  }
-  const neutralClickHandler = newValue => {
-    setNeutral(newValue)
-
-  }
-  const badClickHandler = newValue => {
-    setBad(newValue)
-
-  }
+  const goodClickHandler = newValue => setGood(newValue)
+  const neutralClickHandler = newValue => setNeutral(newValue)
+  const badClickHandler = newValue => setBad(newValue)
 
   return (
     <div>
