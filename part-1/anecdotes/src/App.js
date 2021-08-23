@@ -39,19 +39,24 @@ const App = () => {
       }
     })
 
-    return (
-      <div>
-        <Display array={anecdotes} index={votes.indexOf(i)} />
-        <p>has {i} votes</p>
-      </div>
-    )
+    if (i === 0) {
+      return <p>No votes yet</p>
+    } else {
+      return (
+        <div>
+          <Display array={anecdotes} index={votes.indexOf(i)} />
+          <p>has {i} votes</p>
+        </div>
+      )
+    }
+
   }
 
   return (
     <div>
       <Heading text="Anecdote of the day" />
       <Display array={anecdotes} index={selected} />
-      <Display array={votes} index={selected} />
+      <p>has {votes[selected]}  votes</p>
       <Button text="vote" clickHandler={() => addVote()} />
       <Button text="next anecdote" clickHandler={() => nextAnecdote()} />
       <Heading text="Anecdote with most votes" />
