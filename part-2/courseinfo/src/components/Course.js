@@ -1,6 +1,6 @@
 import React from 'react'
 
-const Heading = ({ courseName }) => <h1>{courseName}</h1>
+const Heading = ({ courseName }) => <h2>{courseName}</h2>
 
 const Parts = ({ parts }) => {
 
@@ -18,6 +18,7 @@ const Course = ({ course }) => {
 
     return (
         <div>
+            <h1>Web development curriculum</h1>
             <Heading courseName={course.name} />
             <Parts parts={course.parts} />
             <TotalExercises parts={course.parts} />
