@@ -14,7 +14,7 @@ const Filter = ({ persons }) => {
         })
 
         if (arr.length > 0) setFiltered(arr)
-        else setFiltered([{ name: "no matches", number: "found" }])
+        else setFiltered([])
     }
 
     const filter = (check, person) => {
