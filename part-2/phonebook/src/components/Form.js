@@ -1,7 +1,8 @@
 import Button from "./Button"
 import React, { useState } from "react";
+import personService from "../services/persons"
 
-const Form = ({ persons, setPersons }) => {
+const Form = ({ persons, setPersons, setMessage, setErrorMessage }) => {
 
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
@@ -9,15 +10,50 @@ const Form = ({ persons, setPersons }) => {
     const onFormSubmit = (e) => {
         e.preventDefault();
 
+        persons.forEach(person => {
+
+            if (person.name.toLowerCase() === newName.toLowerCase() && person.number === newNumber) {
+                alert(`${newName} is already added to phonebook`)
+            }
+            else if (person.name.toLowerCase() === newName.toLowerCase() && person.number !== newNumber) {
+
+                const updateChoice = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)
+
+                if (updateChoice) {
+                    const id = person.id
+
+                    personService
+                        .update(person.id, { name: person.name, number: newNumber })
+                        .then(response => {
+                            setPersons(persons.map(person => person.id !== id ? person : response.data))
+
+                            setMessage('Number Updated')
+                            setTimeout(() => {
+                                setMessage(null)
+                            }, 5000)
+                        })
+                        .catch(error => {
+                            setErrorMessage(
+                                `Information of ${person.name} has already been removed from server`
+                            )
+                        })
+                }
+            }
+        })
+
         const namesArray = []
         persons.forEach(person => namesArray.push(person.name.toLowerCase()))
 
-        if (namesArray.includes(newName.toLowerCase())) {
-            alert(`${newName} is already added to phonebook`)
-
-        } else {
-            const allPersons = [...persons].concat({ name: newName, number: newNumber })
-            setPersons(allPersons)
+        if (!namesArray.includes(newName.toLowerCase())) {
+            personService
+                .create({ name: newName, number: newNumber })
+                .then(response => {
+                    setPersons([...persons].concat(response.data))
+                    setMessage('Number Added')
+                    setTimeout(() => {
+                        setMessage(null)
+                    }, 5000)
+                })
         }
     }
 
