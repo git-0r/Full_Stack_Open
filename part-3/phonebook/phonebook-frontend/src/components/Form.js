@@ -60,8 +60,8 @@ const Form = ({ persons, setPersons, setMessage, setErrorMessage }) => {
                     }, 5000)
                 })
                 .catch(error => {
-                    // console.log(error.response.data)
-                    const err = error.response.data.error
+                    // console.log(error.response.data.error.message)
+                    const err = error.response.data.error.message
                     setErrorMessage(err)
                     setTimeout(() => {
                         setErrorMessage(null)
