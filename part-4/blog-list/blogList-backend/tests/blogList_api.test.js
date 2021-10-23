@@ -1,8 +1,10 @@
-const { response } = require('express')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
+const loginRouter = require('../controllers/login')
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const { tokenExtractor } = require('../utils/middleware')
 const api = supertest(app)
 
 const initialBlogs = [
@@ -46,6 +48,7 @@ const initialBlogs = [
 
 beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({})
 
     const blogObjects = initialBlogs.map(blog => new Blog(blog))
     const promiseArray = blogObjects.map(blog => blog.save())
@@ -54,11 +57,12 @@ beforeEach(async () => {
 
 
 test('blogs are returned as json', async () => {
+
     await api
         .get('/api/blogs')
         .expect(200)
         .expect('Content-Type', /application\/json/)
-}, 100000)
+}, 10000)
 
 test('all blogs are returned', async () => {
     const response = await api.get('/api/blogs')
@@ -67,6 +71,17 @@ test('all blogs are returned', async () => {
 })
 
 test('a valid blog can be added', async () => {
+
+    await api
+        .post('/api/users')
+        .send({ username: "test", name: "test", password: "test" })
+
+    const loginResponse = await api
+        .post('/api/login')
+        .send({ username: "test", password: "test" })
+
+    const token = loginResponse.body.token
+
     const newBlog = {
         title: "async/await",
         author: "me",
@@ -77,6 +92,7 @@ test('a valid blog can be added', async () => {
     await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `Bearer ${token}`)
         .expect(201)
         .expect('Content-Type', /application\/json/)
 
@@ -87,7 +103,35 @@ test('a valid blog can be added', async () => {
     expect(contents).toContain('async/await')
 })
 
+test('adding blog without token fails with status code 401 unauthorized', async () => {
+
+    const newBlog = {
+        title: "async/await",
+        author: "me",
+        url: "https://async-await.com/",
+        likes: 5,
+    }
+
+    const response = await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(401)
+        .expect('Content-Type', /application\/json/)
+
+})
+
 test('missing title and url returns 400 Bad Request', async () => {
+
+    await api
+        .post('/api/users')
+        .send({ username: "test", name: "test", password: "test" })
+
+    const loginResponse = await api
+        .post('/api/login')
+        .send({ username: "test", password: "test" })
+
+    const token = loginResponse.body.token
+
     const newBlog = {
         author: "me",
         likes: 5,
@@ -96,13 +140,9 @@ test('missing title and url returns 400 Bad Request', async () => {
     await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `Bearer ${token}`)
         .expect(400)
 
-    // const response = await api.get('/api/blogs')
-    // const contents = response.body.map(r => r.title)
-
-    // expect(response.body).toHaveLength(initialBlogs.length + 1)
-    // expect(contents).toContain('async/await')
 })
 
 test('unique identifier property is named id', async () => {
@@ -114,6 +154,16 @@ test('unique identifier property is named id', async () => {
 
 test('missing likes property defualts to 0', async () => {
 
+    await api
+        .post('/api/users')
+        .send({ username: "test", name: "test", password: "test" })
+
+    const loginResponse = await api
+        .post('/api/login')
+        .send({ username: "test", password: "test" })
+
+    const token = loginResponse.body.token
+
     const newBlog = {
         title: "async/await",
         author: "me",
@@ -123,6 +173,7 @@ test('missing likes property defualts to 0', async () => {
     await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `Bearer ${token}`)
         .expect(201)
         .expect('Content-Type', /application\/json/)
 
@@ -144,16 +195,42 @@ test('updating likes works', async () => {
 })
 
 test('deletion succeeds with status code 204', async () => {
+
+    await api
+        .post('/api/users')
+        .send({ username: "test", name: "test", password: "test" })
+
+    const loginResponse = await api
+        .post('/api/login')
+        .send({ username: "test", password: "test" })
+
+    const token = loginResponse.body.token
+
+    const newBlog = {
+        title: "async/await",
+        author: "me",
+        url: "https://async-await.com/",
+        likes: 5,
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
     const blogsAtStart = await api.get('/api/blogs')
-    const blogToDelete = blogsAtStart.body[0]
+    const blogToDelete = blogsAtStart.body[`${blogsAtStart.body.length - 1}`]
 
     await api
         .delete(`/api/blogs/${blogToDelete.id}`)
+        .set('Authorization', `Bearer ${token}`)
         .expect(204)
 
     const blogsAtEnd = await api.get('/api/blogs')
 
-    expect(blogsAtEnd.body).toHaveLength(initialBlogs.length - 1
+    expect(blogsAtEnd.body).toHaveLength(initialBlogs.length
     )
 
     const titles = blogsAtEnd.body.map(r => r.title)

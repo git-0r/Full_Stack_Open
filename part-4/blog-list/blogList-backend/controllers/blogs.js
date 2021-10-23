@@ -1,28 +1,37 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
+const jwt = require('jsonwebtoken')
+const { userExtractor } = require('../utils/middleware')
 
 blogsRouter.get('/', async (request, response) => {
 
-    const blogs = await Blog.find({})
+    const blogs = await Blog
+        .find({}).populate('user', { username: 1, name: 1 })
     response.json(blogs)
 })
 
-blogsRouter.post('/', async (request, response) => {
+
+blogsRouter.post('/', userExtractor, async (request, response) => {
+
+    const user = request.user
 
     const title = request.body.title
     const author = request.body.author
     const url = request.body.url
     const likes = request.body.likes === undefined ? 0 : request.body.likes
 
+
     if (title === undefined) {
         response.status(400).json('title missing')
     } else if (url === undefined) {
         response.status(400).json('url missing')
     } else {
-        const blog = new Blog({ title, author, url, likes })
+        const blog = new Blog({ title, author, url, likes, user: user.id })
 
-        const newBlog = await blog.save()
-        response.status(201).json(newBlog)
+        const savedBlog = await blog.save()
+        user.blogs = user.blogs.concat(savedBlog._id)
+        await user.save()
+        response.status(201).json(savedBlog)
     }
 })
 
@@ -36,12 +45,20 @@ blogsRouter.put('/:id', async (request, response) => {
 })
 
 
-blogsRouter.delete('/:id', async (request, response) => {
-
+blogsRouter.delete('/:id', userExtractor, async (request, response) => {
     const id = request.params.id
+    const user = request.user
 
-    await Blog.findByIdAndDelete(id)
-    response.status(204).end()
+    const blogToBeDeleted = await Blog.findById(id)
+
+    if (user.id.toString() !== blogToBeDeleted.user.toString()) {
+        response.status(401).json({ error: 'user mismatch' })
+    }
+    else {
+        await Blog.findByIdAndDelete(id)
+        response.status(204).end()
+    }
+
 })
 
 
