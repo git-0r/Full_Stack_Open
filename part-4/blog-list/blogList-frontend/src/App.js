@@ -47,7 +47,7 @@ function App() {
             setPassword("")
 
             const blogs = await blogService.getAll()
-            console.log("g", blogs)
+            console.log("all blogs", blogs)
             setBlogs(blogs)
 
         } catch (exception) {
