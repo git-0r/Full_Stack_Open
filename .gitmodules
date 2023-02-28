@@ -1,0 +1,3 @@
+[submodule "part-9/16-19/flight-diary"]
+	path = part-9/16-19/flight-diary
+	url = https://github.com/fullstack-hy2020/flight-diary
