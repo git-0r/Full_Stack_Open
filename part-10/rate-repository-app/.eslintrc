@@ -1,5 +1,5 @@
 {
-  "plugins": ["react", "react-native", "jsx"],
+  "plugins": ["react", "react-native", "typescript"],
   "settings": {
     "react": {
       "version": "detect"
