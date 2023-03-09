@@ -2,12 +2,11 @@ import { useQuery } from "@apollo/client";
 import { GET_USER } from "../graphql/queries";
 
 const useAuth = () => {
-  const { data, loading } = useQuery(GET_USER, {
+  const { data } = useQuery(GET_USER, {
     fetchPolicy: "cache-and-network",
   });
 
-  const getUser = () => {};
-  return [data, loading];
+  return data?.me;
 };
 
 export default useAuth;
